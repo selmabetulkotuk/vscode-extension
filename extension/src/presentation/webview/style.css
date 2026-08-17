@@ -1,0 +1,734 @@
+/* Genel Ayarlar */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--vscode-font-family);
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    max-width: 100vw; /* EKLENDİ: Sayfanın yatayda istemsiz büyümesini engeller */
+}
+
+#app {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0; /* EKLENDİ: Flex içindeki uzun kodların taşmasını önler */
+}
+
+/* Üst Menü ve Sidebar Çarpı Butonu (Siyah kutu, beyaz ikon) */
+.icon-btn {
+    background-color: #000000;
+    color: #ffffff;
+    border: 1px solid #444444; 
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+.icon-btn:hover {
+    background-color: #333333;
+}
+
+/* Otomatik/Manuel uygulama modu düğmesi */
+.mode-toggle-btn {
+    font-size: 12px;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+.mode-toggle-btn.mode-auto {
+    background-color: rgba(63, 185, 80, 0.2);
+    border-color: #3fb950;
+    color: #3fb950;
+}
+
+/* Sidebar (Geçmiş Kutucuğu) - Siyah Arkaplan ve Beyaz Çizgiler */
+.sidebar {
+    width: 250px;
+    background-color: #000000;
+    border-right: 1px solid #ffffff;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    color: #ffffff;
+}
+.sidebar:not(.open) {
+    display: none;
+}
+.sidebar-header {
+    padding: 12px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ffffff;
+}
+.new-chat-btn {
+    margin: 12px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.new-chat-btn:hover { background-color: var(--vscode-button-hoverBackground); }
+.session-list { flex: 1; overflow-y: auto; }
+
+/* Geçmişteki her bir sohbet kutucuğu (Gemini Tarzı: Çizgiler silindi, yuvarlatıldı) */
+.session-item {
+    padding: 10px 12px;
+    margin: 4px 8px; 
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.session-item:hover { background-color: #222222; }
+.session-item.active { background-color: #333333; }
+.session-delete-btn { background: none; border: none; color: inherit; cursor: pointer; opacity: 0.6; }
+.session-delete-btn:hover { opacity: 1; }
+
+/* Main Panel */
+.main-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0; /* EKLENDİ: Sağ panelin dışarı taşarak büyümesini engeller */
+}
+.top-bar {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editor-background);
+}
+.app-title { font-weight: bold; margin-left: 10px; }
+
+/* Chat Box & Bubbles (Sohbet Düzeni) */
+.chat-box {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden; /* EKLENDİ: Tüm sohbet kutusunun yatay kaymasını tamamen engeller */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Ortak Mesaj Balonu Stili */
+.msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    line-height: 1.5;
+    position: relative;
+    word-wrap: break-word;
+    word-break: break-word; /* EKLENDİ: Uzun metinleri kelime ortasından kırmasını sağlar */
+    min-width: 0; /* EKLENDİ: İçindeki uzun kodların balonu patlatmasını engeller */
+}
+
+/* Kullanıcı (Sağda) */
+.msg.user {
+    align-self: flex-end;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-bottom-right-radius: 2px;
+}
+
+/* Yapay Zeka (Solda) */
+.msg.ai {
+    align-self: flex-start;
+    background-color: var(--vscode-editorWidget-background);
+    border: 1px solid var(--vscode-widget-border);
+    border-bottom-left-radius: 2px;
+    max-width: 95%; /* EKLENDİ: Uzun kod bloklarının daha rahat sığması için yapay zeka balonu biraz genişletildi */
+}
+
+/* Başlıklar (Siz / AI) */
+.msg-author {
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    opacity: 0.7;
+}
+
+/* Aksiyon Butonları (Kopyala, Düzenle vs.) */
+.msg-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+button.action-btn {
+    background: transparent;
+    border: none;
+    color: currentColor;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s, background 0.2s;
+}
+button.action-btn:hover {
+    opacity: 1;
+    background: rgba(128, 128, 128, 0.2);
+}
+button.action-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+/* Input Alanı */
+.input-area {
+    display: flex;
+    padding: 16px;
+    gap: 8px;
+    background-color: var(--vscode-editor-background);
+    border-top: 1px solid var(--vscode-panel-border);
+}
+#promptInput {
+    flex: 1;
+    resize: none;
+    height: 44px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--vscode-input-border);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    font-family: inherit;
+}
+#promptInput:focus { outline: 1px solid var(--vscode-focusBorder); }
+
+/* Gönder ve Durdur Butonları */
+.send-btn, .stop-btn {
+    border: none;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Gönder Butonu */
+.send-btn {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    cursor: pointer;
+    transition: opacity 0.2s, cursor 0.2s;
+}
+.send-btn:hover:not(:disabled) { 
+    background-color: var(--vscode-button-hoverBackground); 
+}
+.send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Durdur Butonu (Kırmızı) */
+.stop-btn {
+    background-color: #d32f2f;
+    color: #ffffff;
+    cursor: pointer;
+}
+.stop-btn:hover { 
+    background-color: #b71c1c; 
+}
+
+/* Kod Blokları */
+.code-container {
+    margin: 10px 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #1e1e1e;
+    border: 1px solid var(--vscode-editorGroup-border);
+    max-width: 100%; /* EKLENDİ: Kutunun mesaj balonundan taşmasını engeller */
+}
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 12px;
+    background: #2d2d2d;
+    color: #d4d4d4;
+    font-size: 12px;
+}
+.code-header button { color: #d4d4d4; }
+.code-container pre { 
+    margin: 0; 
+    padding: 12px; 
+    overflow-x: auto; 
+    font-size: 13px; 
+    max-width: 100%; /* EKLENDİ: Sadece kod alanının kendi içinde sağa sola kaymasını sağlar */
+}
+.thinking { font-style: italic; opacity: 0.7; }
+
+/* --- FAZ 3 AGENTIC UI TASARIMLARI --- */
+.diff-block {
+    margin: 15px 0;
+    border: 1px solid var(--vscode-editorGroup-border);
+    border-radius: 6px;
+    background-color: var(--vscode-editorWidget-background);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    max-width: 100%; /* EKLENDİ: Öneri kutusunun taşmasını engeller */
+}
+
+.diff-header {
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--vscode-editorGroup-border);
+    font-size: 13px;
+}
+
+.diff-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background-color: var(--vscode-editorWidget-background);
+}
+
+.diff-btn {
+    flex: 1;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.diff-btn:hover {
+    opacity: 0.8;
+}
+
+.diff-btn.preview {
+    background-color: var(--vscode-button-secondaryBackground, #4d4d4d);
+    color: var(--vscode-button-secondaryForeground, #ffffff);
+}
+
+.diff-btn.approve {
+    background-color: #2ea043; /* Yeşil Onay */
+    color: #ffffff;
+}
+
+.diff-btn.reject {
+    background-color: transparent;
+    border: 1px solid #f85149; /* Kırmızı Sınır */
+    color: #f85149;
+}
+.diff-btn.reject:hover {
+    background-color: rgba(248, 81, 73, 0.1);
+}
+
+/* YENİ: Küçük ikon-only diff onay butonları (tik / çarpı / göz) */
+.diff-actions.icon-only {
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 8px 10px;
+}
+.diff-btn-icon {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.diff-btn-icon svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+}
+.diff-btn-icon.preview {
+    color: var(--vscode-editor-foreground);
+}
+.diff-btn-icon.preview svg {
+    width: 16px;
+    height: 16px;
+}
+/* Boş Durum (Empty State) Tasarımı */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+    margin-top: 40px;
+}
+.empty-state .empty-icon {
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: var(--vscode-editor-foreground);
+    font-weight: 600;
+}
+.empty-state p {
+    font-size: 12px;
+    line-height: 1.5;
+}
+.empty-state a {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+}
+
+/* Modern Input Kapsayıcısı */
+.modern-input-wrapper {
+    background-color: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 12px; /* Görseldeki gibi yuvarlak hatlar */
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+}
+
+/* İçerisine dosya eklendiğinde görünecek kutucuklar (Chips) */
+.attachment-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+.attachment-chip {
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.chip-close {
+    cursor: pointer;
+    opacity: 0.7;
+}
+.chip-close:hover { opacity: 1; }
+
+/* Textarea (Yazı Alanı) - Çerçevesiz */
+#promptInput {
+    background: transparent;
+    border: none;
+    color: var(--vscode-editor-foreground);
+    resize: none;
+    min-height: 40px;
+    max-height: 150px;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 5px 0;
+    outline: none; /* Odaklanma çizgisini kaldırır */
+}
+
+/* Alt Araç Çubuğu */
+.input-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+.toolbar-left, .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--vscode-icon-foreground);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.icon-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
+.text-btn {
+    background: transparent;
+    border: none;
+    color: var(--vscode-icon-foreground);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* Footer (En alt bilgi satırı) */
+.footer-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px 10px 20px;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+}
+/* ==================== */
+/* Copilot Tarzı Ayarlar Modalı */
+/* ==================== */
+.orbit-settings-backdrop {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 4000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.orbit-settings-modal {
+    width: 100%;
+    max-width: 760px;
+    height: 100%;
+    max-height: 620px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.orbit-settings-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+}
+.orbit-settings-titlebar-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+    opacity: 0.85;
+}
+.orbit-settings-titlebar-actions {
+    display: flex;
+    gap: 4px;
+}
+.orbit-settings-body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+.orbit-settings-nav {
+    width: 190px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--vscode-panel-border);
+    padding: 10px 8px;
+    overflow-y: auto;
+}
+.orbit-settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--vscode-editor-foreground);
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12.5px;
+    margin-bottom: 2px;
+}
+.orbit-settings-nav-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.orbit-settings-nav-item.active {
+    background: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+    font-weight: 600;
+}
+.orbit-settings-nav-item .badge {
+    margin-left: auto;
+    font-size: 10px;
+    opacity: 0.65;
+}
+.orbit-settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 26px 30px;
+}
+.orbit-settings-page { display: none; }
+.orbit-settings-page.active { display: block; }
+.orbit-settings-page h2 {
+    margin: 0 0 6px 0;
+    font-size: 20px;
+    color: var(--vscode-editor-foreground);
+}
+.orbit-settings-page .subtitle {
+    margin: 0 0 22px 0;
+    font-size: 12.5px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+}
+.orbit-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.orbit-card {
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.orbit-card-icon {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--vscode-textLink-foreground);
+}
+.orbit-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vscode-editor-foreground);
+}
+.orbit-card-desc {
+    font-size: 11.5px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+    flex: 1;
+}
+.orbit-card-btn {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    background: transparent;
+    color: var(--vscode-editor-foreground);
+    border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    cursor: pointer;
+}
+.orbit-card-btn:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.orbit-form-group {
+    margin-bottom: 16px;
+}
+.orbit-form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--vscode-editor-foreground);
+}
+.orbit-form-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+    padding: 7px 10px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    outline: none;
+}
+.orbit-form-hint {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    margin-top: 4px;
+}
+.orbit-lang-choice {
+    display: flex;
+    gap: 10px;
+}
+.orbit-lang-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--vscode-panel-border);
+    background: transparent;
+    color: var(--vscode-editor-foreground);
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.orbit-lang-btn.active {
+    border-color: var(--vscode-focusBorder);
+    background: var(--vscode-list-activeSelectionBackground);
+}
+
+/* === TAM SAYFA AYARLAR PANELİ (editör alanında ayrı sekme olarak açılır) === */
+.settings-page-root {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+}
+.settings-page-root .orbit-settings-nav {
+    width: 260px;
+    min-width: 220px;
+    border-right: 1px solid var(--vscode-panel-border);
+    padding: 28px 14px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+.settings-page-root .orbit-settings-nav-item {
+    font-size: 13.5px;
+    padding: 9px 12px;
+}
+.settings-page-root .orbit-settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 44px 56px;
+    box-sizing: border-box;
+    max-width: 1100px;
+}
+.settings-page-root .settings-hero-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--vscode-editor-foreground);
+}
+.settings-page-root .settings-hero-sub {
+    font-size: 13.5px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 32px;
+    max-width: 720px;
+    line-height: 1.6;
+}
+.settings-page-root .orbit-card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.settings-page-root .orbit-card {
+    padding: 20px;
+    gap: 10px;
+}
+.settings-page-root .orbit-card-icon {
+    width: 32px; height: 32px;
+    font-size: 20px;
+}
+.settings-page-root .orbit-card-title {
+    font-size: 15px;
+}
+.settings-page-root .orbit-card-desc {
+    font-size: 12.5px;
+}
+.settings-page-root .orbit-settings-page h2 {
+    font-size: 20px;
+}

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>ORBIT</title>
+    <!-- Prism kod renklendirme teması -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="{{CSS_URI}}">
+    
+    <!-- Açılır Menü (Dropdown) İçin Gerekli CSS Stilleri -->
+    <style>
+        .dropdown-content {
+            position: absolute;
+            top: 35px;
+            right: 0;
+            background-color: var(--vscode-dropdown-background);
+            border: 1px solid var(--vscode-dropdown-border);
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            min-width: 180px;
+            z-index: 2000;
+            flex-direction: column;
+            padding: 5px;
+        }
+        .dropdown-content button {
+            background: transparent;
+            color: var(--vscode-dropdown-foreground);
+            border: none;
+            padding: 10px 12px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dropdown-content button:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+        .dropdown-divider {
+            border: 0;
+            border-top: 1px solid var(--vscode-dropdown-border);
+            margin: 4px 0;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Sol Kenar Çubuğu (Menüden "Sohbet Geçmişi"ne basılınca açılır) -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <span id="sidebarTitle">Sohbetler</span>
+                <button id="closeSidebarBtn" class="icon-btn" title="Kapat">✕</button>
+            </div>
+            <button id="newChatBtn" class="new-chat-btn">+ Yeni Sohbet</button>
+            <div id="sessionList" class="session-list"></div>
+        </div>
+
+       <!-- Ana Panel -->
+        <div class="main-panel">
+            <!-- Sağ üst köşe: Mini araç butonları, üç nokta menüsü ve dropdown -->
+            <div style="display: flex; justify-content: flex-end; align-items: center; padding: 4px 15px; gap: 4px;">
+                
+                <!-- YENİ: Üç noktanın yanındaki mini Zafiyet Tara butonu -->
+                <button onclick="triggerSecurityScan()" title="Zafiyet Tara" style="background: transparent; border: none; color: var(--vscode-editor-foreground); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 4px; display: flex; align-items: center;" onmouseover="this.style.background='var(--vscode-list-hoverBackground)'" onmouseout="this.style.background='transparent'">
+                    🛡️
+                </button>
+                
+                <!-- YENİ: Üç noktanın yanındaki mini Terminal Hatasını Çöz butonu -->
+                <button onclick="triggerTerminalAnalysis()" title="Terminal Hatasını Çöz" style="background: transparent; border: none; color: var(--vscode-editor-foreground); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 4px; display: flex; align-items: center;" onmouseover="this.style.background='var(--vscode-list-hoverBackground)'" onmouseout="this.style.background='transparent'">
+                    🛠️
+                </button>
+
+                <!-- YENİ: Dil Seçim Butonu ve Açılır Menüsü -->
+                <div style="display: flex; align-items: center; position: relative;">
+                    <button id="langMenuBtn" title="Dil / Language" style="background: transparent; border: none; color: var(--vscode-editor-foreground); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 4px; display: flex; align-items: center;" onmouseover="this.style.background='var(--vscode-list-hoverBackground)'" onmouseout="this.style.background='transparent'">
+                        🌐
+                    </button>
+                    <div id="langDropdown" class="dropdown-content" style="display: none; min-width: 140px;">
+                        <button id="langTR" data-lang="tr">🇹🇷 Türkçe</button>
+                        <button id="langEN" data-lang="en">🇬🇧 English</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; position: relative; margin-left: 2px;">
+                    <!-- Açılır Menü Butonu (Üç Nokta İkonu) -->
+                    <button id="mainMenuBtn" class="icon-btn" title="Menü" style="font-size: 20px; font-weight: bold;">⋮</button>
+                    
+                    <!-- Açılır Menü Seçenekleri -->
+                    <div id="mainDropdown" class="dropdown-content" style="display: none;">
+                        <button id="menuNewChat">Yeni Sohbet</button>
+                        <button id="menuHistory">Sohbet Geçmişi</button>
+                        <button id="menuNotepad">Not Defteri</button>
+                        <hr class="dropdown-divider">
+                        <button id="menuSettings">Ayarlar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orta Boş Durum (Empty State) -->
+            <div id="empty-state" class="empty-state">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path>
+                    </svg>
+                </div>
+                <h3 id="emptyStateTitle">Build with ORBIT</h3>
+                <p id="emptyStateText">AI responses may be inaccurate.<br><a href="#">Generate Agent Instructions</a> to onboard AI onto your codebase.</p>
+            </div>
+
+            <div id="chat-box" class="chat-box"></div>
+
+            <!-- Modern Input Alanı -->
+            <div id="modern-input-wrapper" class="modern-input-wrapper">
+                <!-- Seçilen dosyaların önizlemesinin görüneceği alan -->
+                <div id="attachment-chips" class="attachment-chips"></div>
+                
+                <textarea id="promptInput" placeholder=" Describe what the build.  (Enter: gönder, Shift+Enter: yeni satır)"></textarea>
+                
+                <!-- Input içi alt araç çubuğu -->
+                <div class="input-toolbar">
+                    <div class="toolbar-left">
+                        <button id="attachBtn" class="icon-btn" title="Dosya / Fotoğraf Ekle">+</button>
+                        <input type="file" id="fileUploadInput" multiple style="display: none;" accept="image/*, .txt, .js, .py, .php, .json, .md">
+                        
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="icon-btn microphone-btn" title="Sesli Giriş"></button>
+                        <button id="stopBtn" class="icon-btn stop-btn" title="Durdur" style="display:none; color: red;">■</button>
+                        <button id="sendBtn" class="icon-btn send-btn" title="Gönder">➤</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- En alt bilgi satırı -->
+
+        </div>
+    </div>
+
+    <!-- Ayarlar Modal (Copilot tarzı) -->
+    <div id="settings-overlay" class="orbit-settings-backdrop">
+        <div class="orbit-settings-modal">
+
+            <!-- Üst başlık çubuğu -->
+            <div class="orbit-settings-titlebar">
+                <span class="orbit-settings-titlebar-title" id="settingsTitlebarTitle">ORBIT Ayarları</span>
+                <div class="orbit-settings-titlebar-actions">
+                    <button id="settings-cancel-btn" class="icon-btn" title="Kapat">✕</button>
+                </div>
+            </div>
+
+            <div class="orbit-settings-body">
+                <!-- Sol Navigasyon -->
+                <div class="orbit-settings-nav">
+                    <button class="orbit-settings-nav-item active" data-page="overview">🏠 <span id="navOverview">Genel Bakış</span></button>
+                    <button class="orbit-settings-nav-item" data-page="connection">🔌 <span id="navConnection">Bağlantı</span></button>
+                    <button class="orbit-settings-nav-item" data-page="mode">⚡ <span id="navMode">Uygulama Modu</span></button>
+                    <button class="orbit-settings-nav-item" data-page="language">🌐 <span id="navLanguage">Dil</span></button>
+                    <button class="orbit-settings-nav-item" data-page="vscode">⚙️ <span id="navVscode">VS Code Ayarları</span></button>
+                </div>
+
+                <!-- Sağ İçerik Alanı -->
+                <div class="orbit-settings-content">
+
+                    <!-- SAYFA: Genel Bakış -->
+                    <div class="orbit-settings-page active" id="page-overview">
+                        <h2 id="overviewTitle">ORBIT Ayarları</h2>
+                        <p class="subtitle" id="overviewSubtitle">ORBIT'in projelerinizde nasıl çalışacağını buradan özelleştirin. Bağlantı, çalışma modu ve dil tercihlerinizi yönetin.</p>
+
+                        <div class="orbit-card-grid">
+                            <div class="orbit-card">
+                                <div class="orbit-card-icon">🔌</div>
+                                <div class="orbit-card-title" id="cardConnectionTitle">Bağlantı</div>
+                                <div class="orbit-card-desc" id="cardConnectionDesc">API endpoint, model adı ve API anahtarınızı yapılandırın (LM Studio, OpenAI vb.).</div>
+                                <button class="orbit-card-btn nav-jump" data-page="connection" id="cardConnectionBtn">Düzenle...</button>
+                            </div>
+                            <div class="orbit-card">
+                                <div class="orbit-card-icon">⚡</div>
+                                <div class="orbit-card-title" id="cardModeTitle">Uygulama Modu</div>
+                                <div class="orbit-card-desc" id="cardModeDesc">AI önerilerinin doğrudan mı uygulanacağını yoksa önce onay mı isteneceğini belirleyin.</div>
+                                <button class="orbit-card-btn nav-jump" data-page="mode" id="cardModeBtn">Düzenle...</button>
+                            </div>
+                            <div class="orbit-card">
+                                <div class="orbit-card-icon">🌐</div>
+                                <div class="orbit-card-title" id="cardLanguageTitle">Dil</div>
+                                <div class="orbit-card-desc" id="cardLanguageDesc">Arayüz ve AI yanıtlarının hangi dilde olacağını seçin.</div>
+                                <button class="orbit-card-btn nav-jump" data-page="language" id="cardLanguageBtn">Düzenle...</button>
+                            </div>
+                            <div class="orbit-card">
+                                <div class="orbit-card-icon">⚙️</div>
+                                <div class="orbit-card-title" id="cardVscodeTitle">VS Code Ayarları</div>
+                                <div class="orbit-card-desc" id="cardVscodeDesc">Bu eklentiye ait ayarları VS Code'un genel Ayarlar sekmesinden görüntüleyin.</div>
+                                <button class="orbit-card-btn" id="open-native-settings-btn">Aç...</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAYFA: Bağlantı -->
+                    <div class="orbit-settings-page" id="page-connection">
+                        <h2 id="connectionTitle">Bağlantı Ayarları</h2>
+                        <p class="subtitle" id="connectionSubtitle">Yapay zeka isteklerinin gönderileceği API adresini ve modeli yapılandırın.</p>
+
+                        <div class="orbit-form-group">
+                            <label class="orbit-form-label" id="labelEndpoint">API Endpoint</label>
+                            <input id="settings-endpoint" class="orbit-form-input" type="text" placeholder="http://127.0.0.1:1234/v1/chat/completions">
+                        </div>
+                        <div class="orbit-form-group">
+                            <label class="orbit-form-label" id="labelModel">Model Adı</label>
+                            <input id="settings-model" class="orbit-form-input" type="text" placeholder="local-model">
+                        </div>
+                        <div class="orbit-form-group" style="position: relative;">
+                            <label class="orbit-form-label" id="labelApiKey">API Anahtarı</label>
+                            <input id="settings-apikey" class="orbit-form-input" type="password" placeholder="sk-... (yerel sunucular için boş bırakılabilir)" style="padding-right: 34px;">
+                            <button id="toggle-apikey-btn" style="position: absolute; right: 8px; top: 29px; background: none; border: none; cursor: pointer; padding: 4px; color: var(--vscode-editor-foreground); display: flex; align-items: center; justify-content: center;" title="Şifreyi Göster">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                            </button>
+                        </div>
+
+                        <button id="settings-save-btn" class="orbit-card-btn" style="background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; font-weight: 600; padding: 7px 16px;">Kaydet</button>
+                    </div>
+
+                    <!-- SAYFA: Uygulama Modu -->
+                    <div class="orbit-settings-page" id="page-mode">
+                        <h2 id="modeTitle">Uygulama Modu</h2>
+                        <p class="subtitle" id="modeSubtitle">Manuel modda AI önerileri önce önizleme olarak gösterilir ve onayınızı bekler. Otomatik modda öneriler doğrudan uygulanır.</p>
+                        <button id="modeToggleBtn" class="icon-btn mode-toggle-btn" title="Uygulama Modu: Manuel (önizleme + onay) / Otomatik (direkt uygula)">Manuel</button>
+                    </div>
+
+                    <!-- SAYFA: Dil -->
+                    <div class="orbit-settings-page" id="page-language">
+                        <h2 id="languageTitle">Dil Tercihi</h2>
+                        <p class="subtitle" id="languageSubtitle">Arayüz metinlerinin ve AI yanıtlarının hangi dilde olacağını seçin.</p>
+                        <div class="orbit-lang-choice">
+                            <button class="orbit-lang-btn" id="settingsLangTR" data-lang="tr"><span style="font-size:20px;">🇹🇷</span> Türkçe</button>
+                            <button class="orbit-lang-btn" id="settingsLangEN" data-lang="en"><span style="font-size:20px;">🇬🇧</span> English</button>
+                        </div>
+                    </div>
+
+                    <!-- SAYFA: VS Code Ayarları -->
+                    <div class="orbit-settings-page" id="page-vscode">
+                        <h2 id="vscodeTitle">VS Code Ayarları</h2>
+                        <p class="subtitle" id="vscodeSubtitle">ORBIT'in ayarları, VS Code'un yerleşik Ayarlar (Settings) sekmesinde <code>ORBITAiAssistant</code> altında da kayıtlıdır.</p>
+                        <button id="open-native-settings-btn-2" class="orbit-card-btn" style="padding: 8px 16px;">VS Code Genel Ayarlarını Aç</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- YENİ: Not Defteri Modal (Pop-up) Ekranı -->
+    <div id="notepad-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: var(--vscode-editor-background); padding: 20px; border-radius: 8px; border: 1px solid var(--vscode-panel-border); width: 100%; max-width: 500px; height: 70%; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+            <h3 style="margin-top: 0; margin-bottom: 15px; color: var(--vscode-editor-foreground); display: flex; justify-content: space-between; align-items: center;">
+                <span> Not Defteri</span>
+                <button id="notepad-close-icon" style="background: none; border: none; color: var(--vscode-icon-foreground); cursor: pointer; font-size: 16px;">✕</button>
+            </h3>
+            
+            <textarea id="notepad-textarea" placeholder="Buraya notlarınızı yazabilirsiniz... (Kaydet'e bastığınızda hafızada kalır)" style="flex: 1; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); padding: 10px; border-radius: 4px; resize: none; font-family: inherit; font-size: 13px; outline: none;"></textarea>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+                <button id="notepad-cancel-btn" style="padding: 8px 15px; cursor: pointer; background: transparent; color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border); border-radius: 4px;">Kapat</button>
+                <button id="notepad-save-btn" style="padding: 8px 15px; cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 4px; font-weight: bold;">Kaydet</button>
+            </div>
+        </div>
+    </div>
+   
+
+    <!-- Script Yüklemeleri -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+    <script src="{{JS_URI}}"></script>
+</body>
+</html>

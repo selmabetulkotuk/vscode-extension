@@ -1,0 +1,123 @@
+{
+  "name": "ai-chat-assistant",
+  "displayName": "ORBIT AI Assistant",
+  "description": "ORBIT AI Asistanı VS Code Eklentisi",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ORBIT.explainCode",
+        "title": "ORBIT AI: Bu Kodu Açıkla"
+      },
+      {
+        "command": "ORBIT.fixError",
+        "title": "ORBIT AI: Bu Hatayı Düzelt"
+      },
+      {
+        "command": "ORBIT.writeTest",
+        "title": "ORBIT AI: Buraya Test Yaz"
+      },
+      {
+        "command": "ORBIT.showGitDiff",
+        "title": "ORBIT AI: Git Değişikliklerini Göster"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "ORBIT.explainCode",
+          "group": "ORBIT-group@1"
+        },
+        {
+          "command": "ORBIT.fixError",
+          "group": "ORBIT-group@2"
+        },
+        {
+          "command": "ORBIT.writeTest",
+          "group": "ORBIT-group@3"
+        },
+        {
+          "command": "ORBIT.showGitDiff",
+          "group": "ORBIT-group@4"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ORBIT-ai-sidebar",
+          "title": "ORBIT",
+          "icon": "media/newicon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ORBIT-ai-sidebar": [
+        {
+          "type": "webview",
+          "id": "aiChatView",
+          "name": "" 
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ORBIT AI Assistant",
+      "properties": {
+        "ORBITAiAssistant.endpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:1234/v1/chat/completions",
+          "description": "Yapay zeka API Endpoint adresi (Örn: LM Studio, OpenAI, Huna vb.)"
+        },
+        "ORBITAiAssistant.model": {
+          "type": "string",
+          "default": "local-model",
+          "description": "Kullanılacak modelin adı."
+        },
+        "ORBITAiAssistant.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Anahtarı (LM Studio gibi yerel sunucular için boş bırakabilirsiniz)."
+        },
+        "ORBITAiAssistant.autoApply": {
+          "type": "boolean",
+          "default": false,
+          "description": "Açıksa AI önerileri önizleme göstermeden doğrudan uygulanır. Kapalıysa (varsayılan) önce yeşil/kırmızı önizleme gösterilir ve Kabul Et/Geri Al ile onay istenir."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node esbuild.js --production",
+    "compile": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    
+    "@types/diff": "^7.0.2",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.3.8",
+    "esbuild": "^0.28.1",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.3"
+  },
+  "dependencies": {
+    "diff": "^9.0.0",
+    "dotenv": "^17.4.2",
+    "marked": "^9.1.6",
+    "prismjs": "^1.30.0"
+  }
+}
